@@ -25,7 +25,7 @@ router.post("/save_erick_data/", function (req, res) {
     latitude: api_data["uplink_message"]["decoded_payload"]["data"][0],
     longitude: api_data["uplink_message"]["decoded_payload"]["data"][1],
     speed: api_data["uplink_message"]["decoded_payload"]["data"][4],
-    received_at: new Date().toISOString(),
+    received_at: new Date(),
   }).save(function (err, result) {
     if (err) throw err;
 
@@ -37,26 +37,90 @@ router.post("/save_erick_data/", function (req, res) {
 });
 
 router.get("/get_erick_data/", function (req, res) {
-  Model.aggregate(
-    [
-      { $sort: { received_at: -1 } },
-      {
-        $group: {
-          _id: "$erick_id",
-          data: {
-            $first: {
-              lat: "$latitude",
-              lng: "$longitude",
-              speed: "$speed",
+  if (req.query.erick_id == undefined && req.query.start_date == undefined && req.query.end_date == undefined) {
+    Model.aggregate(
+      [
+        { $sort: { received_at: -1 } },
+        {
+          $group: {
+            _id: "$erick_id",
+            data: {
+              $first: {
+                lat: "$latitude",
+                lng: "$longitude",
+                speed: "$speed",
+              },
             },
           },
         },
-      },
-    ],
-    (err, data) => {
-      res.send(data);
-    }
-  );
+      ],
+      (err, data) => {
+        res.send(data);
+      }
+    );
+  } else if (req.query.start_date == undefined && req.query.end_date == undefined) {
+    Model.aggregate(
+      [
+        { $match: { erick_id: req.query.erick_id } },
+      ],
+      (err, data) => {
+        res.send(data);
+      }
+    );
+  } else if(req.query.erick_id == undefined){
+    Model.aggregate(
+      [
+        { $match: { received_at: { $lte: new Date(req.query.end_date) } } },
+        { $sort: { received_at: -1 } },
+        {
+          $group: {
+            _id: "$erick_id",
+            data: {
+              $first: {
+                lat: "$latitude",
+                lng: "$longitude",
+                speed: "$speed",
+              },
+            },
+          },
+        },
+      ],
+      (err, data) => {
+        res.send(data);
+      }
+    );
+  } else if(req.query.end_date == undefined){
+    Model.aggregate(
+      [
+        { $match: { erick_id: req.query.erick_id, received_at: { $gte: new Date(req.query.start_date) } } },
+      ],
+      (err, data) => {
+        res.send(data);
+      }
+    );
+  } else if(req.query.start_date == undefined){
+    Model.aggregate(
+      [
+        { $match: { erick_id: req.query.erick_id, received_at: { $lte: new Date(req.query.end_date) } } },
+      ],
+      (err, data) => {
+        res.send(data);
+      }
+    );
+  }
+  else {
+    console.log(req.query.start_date);
+    Model.aggregate(
+      [
+        { $match: { erick_id: req.query.erick_id, received_at: { $gte: new Date(req.query.start_date), $lte: new Date(req.query.end_date) } } }
+      ],
+      (err, data) => {
+        console.log(data);
+        console.log(err);
+        res.send(data);
+      }
+    );
+  }
 });
 
 module.exports = router;

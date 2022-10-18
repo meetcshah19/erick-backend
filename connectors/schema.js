@@ -6,7 +6,7 @@ const  data = new Schema({
     longitude: Number,
     speed: Number,
     time: Number,
-    received_at: String
+    received_at: Date
 }, {
     collection: 'data'
 });
