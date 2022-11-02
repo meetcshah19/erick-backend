@@ -10,6 +10,8 @@ router.post("/save_erick_data/", function (req, res) {
       erick_id: api_data["end_device_ids"]["device_id"],
       lat: api_data["uplink_message"]["decoded_payload"]["data"][0],
       lng: api_data["uplink_message"]["decoded_payload"]["data"][1],
+      driver_name: api_data["uplink_message"]["decoded_payload"]["data"][2],
+      driver_contact: api_data["uplink_message"]["decoded_payload"]["data"][3],
       received_at: new Date(),
     })
   );
@@ -17,6 +19,8 @@ router.post("/save_erick_data/", function (req, res) {
     erick_id: api_data["end_device_ids"]["device_id"],
     lat: api_data["uplink_message"]["decoded_payload"]["data"][0],
     lng: api_data["uplink_message"]["decoded_payload"]["data"][1],
+    driver_name: api_data["uplink_message"]["decoded_payload"]["data"][2],
+    driver_contact: api_data["uplink_message"]["decoded_payload"]["data"][3],
     received_at: new Date(),
   });
 
@@ -25,6 +29,8 @@ router.post("/save_erick_data/", function (req, res) {
     latitude: api_data["uplink_message"]["decoded_payload"]["data"][0],
     longitude: api_data["uplink_message"]["decoded_payload"]["data"][1],
     speed: api_data["uplink_message"]["decoded_payload"]["data"][4],
+    driver_name: api_data["uplink_message"]["decoded_payload"]["data"][2],
+    driver_contact: api_data["uplink_message"]["decoded_payload"]["data"][3],
     received_at: new Date(),
   }).save(function (err, result) {
     if (err) throw err;
@@ -49,6 +55,8 @@ router.get("/get_erick_data/", function (req, res) {
                 lat: "$latitude",
                 lng: "$longitude",
                 speed: "$speed",
+                driver_name: "$driver_name",
+                driver_contact: "$driver_contact",
               },
             },
           },
@@ -80,6 +88,8 @@ router.get("/get_erick_data/", function (req, res) {
                 lat: "$latitude",
                 lng: "$longitude",
                 speed: "$speed",
+                driver_name: "$driver_name",
+                driver_contact: "$driver_contact",
               },
             },
           },

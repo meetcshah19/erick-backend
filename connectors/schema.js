@@ -6,6 +6,8 @@ const  data = new Schema({
     longitude: Number,
     speed: Number,
     time: Number,
+    driver_name: String,
+    driver_contact: Number,
     received_at: Date
 }, {
     collection: 'data'
