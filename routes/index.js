@@ -57,6 +57,7 @@ router.get("/get_erick_data/", function (req, res) {
             _id: "$erick_id",
             data: {
               $first: {
+                erick_id:"$erick_id",
                 lat: "$lat",
                 lng: "$lng",
                 speed: "$speed",
