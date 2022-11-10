@@ -36,19 +36,74 @@ router.post("/save_erick_data/", function (req, res) {
   });
 });
 
-router.post("/save_driver_details/", async function (req, res){
-  let api_data = req.body
-  let id = req.body["id"]
-  let name = req.body["name"]
-  const result = await Model.updateMany({ erick_id: 'eui-0102030405060708' }, {
-    driver_name: 'Jon Snow',
-    driver_contact: '7894561230'
-  });
-})
+router.post("/save_driver_details/", async function (req, res) {
+  let api_data = req.body;
+  let id = req.body["id"];
+  let name = req.body["name"];
+  const result = await Model.updateMany(
+    { erick_id: "eui-0102030405060708" },
+    {
+      driver_name: "Jon Snow",
+      driver_contact: "7894561230",
+    }
+  );
+});
 
 router.get("/get_erick_data/", function (req, res) {
- 
-  if (req.query.erick_id == undefined && req.query.start_date == undefined && req.query.end_date == undefined) {
+  if (req.query.erick_id == "all") {
+    if (req.query.start_date == undefined && req.query.end_date == undefined) {
+      Model.find({}, function (err, result) {
+        if (result) {
+          res.send(result);
+        }
+      });
+    } else if (
+      req.query.start_date != undefined &&
+      req.query.end_date != undefined
+    ) {
+      Model.find(
+        {
+          received_at: { $gte: req.query.start_date, $lte: req.query.end_date },
+        },
+        function (err, result) {
+          if (err) throw err;
+          if (result) {
+            res.send(result);
+          }
+        }
+      );
+    } else if (
+      req.query.start_date != undefined &&
+      req.query.end_date == undefined
+    ) {
+      Model.find(
+        { received_at: { $gte: req.query.start_date } },
+        function (err, result) {
+          if (err) throw err;
+          if (result) {
+            res.send(result);
+          }
+        }
+      );
+    } else if (
+      req.query.start_date == undefined &&
+      req.query.end_date != undefined
+    ) {
+      Model.find(
+        { received_at: { $lte: req.query.end_date } },
+        function (err, result) {
+          if (err) throw err;
+          if (result) {
+            res.send(result);
+          }
+        }
+      );
+    }
+  } else if (
+    req.query.erick_id == undefined &&
+    req.query.start_date == undefined &&
+    req.query.end_date == undefined
+  ) {
     Model.aggregate(
       [
         { $sort: { received_at: -1 } },
@@ -57,13 +112,13 @@ router.get("/get_erick_data/", function (req, res) {
             _id: "$erick_id",
             data: {
               $first: {
-                erick_id:"$erick_id",
+                erick_id: "$erick_id",
                 lat: "$lat",
                 lng: "$lng",
                 speed: "$speed",
                 driver_name: "$driver_name",
                 driver_contact: "$driver_contact",
-                received_at: "$received_at"
+                received_at: "$received_at",
               },
             },
           },
@@ -73,16 +128,17 @@ router.get("/get_erick_data/", function (req, res) {
         res.send(data);
       }
     );
-  } else if (req.query.start_date == undefined && req.query.end_date == undefined) {
+  } else if (
+    req.query.start_date == undefined &&
+    req.query.end_date == undefined
+  ) {
     Model.aggregate(
-      [
-        { $match: { erick_id: req.query.erick_id } },
-      ],
+      [{ $match: { erick_id: req.query.erick_id } }],
       (err, data) => {
         res.send(data);
       }
     );
-  } else if(req.query.erick_id == undefined){
+  } else if (req.query.erick_id == undefined) {
     Model.aggregate(
       [
         { $match: { received_at: { $lte: new Date(req.query.end_date) } } },
@@ -97,7 +153,7 @@ router.get("/get_erick_data/", function (req, res) {
                 speed: "$speed",
                 driver_name: "$driver_name",
                 driver_contact: "$driver_contact",
-                received_at: "$received_at"
+                received_at: "$received_at",
               },
             },
           },
@@ -107,30 +163,47 @@ router.get("/get_erick_data/", function (req, res) {
         res.send(data);
       }
     );
-  } else if(req.query.end_date == undefined){
+  } else if (req.query.end_date == undefined) {
     Model.aggregate(
       [
-        { $match: { erick_id: req.query.erick_id, received_at: { $gte: new Date(req.query.start_date) } } },
+        {
+          $match: {
+            erick_id: req.query.erick_id,
+            received_at: { $gte: new Date(req.query.start_date) },
+          },
+        },
       ],
       (err, data) => {
         res.send(data);
       }
     );
-  } else if(req.query.start_date == undefined){
+  } else if (req.query.start_date == undefined) {
     Model.aggregate(
       [
-        { $match: { erick_id: req.query.erick_id, received_at: { $lte: new Date(req.query.end_date) } } },
+        {
+          $match: {
+            erick_id: req.query.erick_id,
+            received_at: { $lte: new Date(req.query.end_date) },
+          },
+        },
       ],
       (err, data) => {
         res.send(data);
       }
     );
-  }
-  else {
+  } else {
     console.log(req.query.start_date);
     Model.aggregate(
       [
-        { $match: { erick_id: req.query.erick_id, received_at: { $gte: new Date(req.query.start_date), $lte: new Date(req.query.end_date) } } }
+        {
+          $match: {
+            erick_id: req.query.erick_id,
+            received_at: {
+              $gte: new Date(req.query.start_date),
+              $lte: new Date(req.query.end_date),
+            },
+          },
+        },
       ],
       (err, data) => {
         console.log(data);
