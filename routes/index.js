@@ -1,8 +1,8 @@
-var express = require("express");
+var express = require("express")
 var router = express.Router();
 let socketapi = require("../connectors/socket");
 var Model = require("../connectors/mongo");
-
+var axios = require("axios");
 router.post("/save_erick_data/", function (req, res) {
   var api_data = req.body;
   console.log(
@@ -48,6 +48,40 @@ router.post("/save_driver_details/", async function (req, res) {
     }
   );
 });
+
+router.post("/downlink/", async function (req, res) {
+  let erick_id = req.body["erick_id"]
+  let api_data = req.body["data"]
+  var data = JSON.stringify({
+    "downlinks": [
+      {
+        "frm_payload": Buffer.from(api_data).toString('base64'),        
+        "f_port": 15,
+        "priority": "NORMAL"
+      }
+    ]
+  });
+
+  var config = {
+    method: 'post',
+    url: `https://eu1.cloud.thethings.network/api/v3/as/applications/erick-tracking/webhooks/testing/devices/`+erick_id+`/down/push`,
+    headers: {
+      'Authorization': 'Bearer NNSXS.ILIFQTABIZ5JAQIT4BOTLZ7KGDQJFJDI2ULAMNQ.UUZ5XK7MKIKG3V4KGQN45QOMBYRPQLIG2T3UN5NZJN32JVHDIS6A',
+      'Content-Type': 'application/json',
+      'User-Agent': 'my-integration/my-integration-version'
+    },
+    data: data
+  };
+
+  axios(config)
+    .then(function (response) {
+      console.log(JSON.stringify(response.data));
+    })
+    .catch(function (error) {
+      console.log(error);
+    });
+
+})
 
 router.get("/get_erick_data/", function (req, res) {
   if (req.query.erick_id == "all") {
