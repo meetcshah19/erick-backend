@@ -3,37 +3,45 @@ var router = express.Router();
 let socketapi = require("../connectors/socket");
 var Model = require("../connectors/mongo");
 var axios = require("axios");
+
 router.post("/save_erick_data/", function (req, res) {
   var api_data = req.body;
-  console.log(
-    JSON.stringify({
+  if (api_data["end_device_ids"]["device_id"] && api_data["uplink_message"]["decoded_payload"]["data"][0] && api_data["uplink_message"]["decoded_payload"]["data"][1] ) {
+    console.log(
+      JSON.stringify({
+        erick_id: api_data["end_device_ids"]["device_id"],
+        lat: api_data["uplink_message"]["decoded_payload"]["data"][0],
+        lng: api_data["uplink_message"]["decoded_payload"]["data"][1],
+        locked: api_data["uplink_message"]["decoded_payload"]["data"][2],
+        received_at: new Date(),
+      })
+    );
+    socketapi.io.emit("update", {
       erick_id: api_data["end_device_ids"]["device_id"],
       lat: api_data["uplink_message"]["decoded_payload"]["data"][0],
       lng: api_data["uplink_message"]["decoded_payload"]["data"][1],
+      locked: api_data["uplink_message"]["decoded_payload"]["data"][2],
       received_at: new Date(),
-    })
-  );
-  socketapi.io.emit("update", {
-    erick_id: api_data["end_device_ids"]["device_id"],
-    lat: api_data["uplink_message"]["decoded_payload"]["data"][0],
-    lng: api_data["uplink_message"]["decoded_payload"]["data"][1],
-    received_at: new Date(),
-  });
+    });
 
-  var save_data = new Model({
-    erick_id: api_data["end_device_ids"]["device_id"],
-    lat: api_data["uplink_message"]["decoded_payload"]["data"][0],
-    lng: api_data["uplink_message"]["decoded_payload"]["data"][1],
-    speed: api_data["uplink_message"]["decoded_payload"]["data"][4],
-    received_at: new Date(),
-  }).save(function (err, result) {
-    if (err) throw err;
+    var save_data = new Model({
+      erick_id: api_data["end_device_ids"]["device_id"],
+      lat: api_data["uplink_message"]["decoded_payload"]["data"][0],
+      lng: api_data["uplink_message"]["decoded_payload"]["data"][1],
+      locked: api_data["uplink_message"]["decoded_payload"]["data"][2],
+      speed: api_data["uplink_message"]["decoded_payload"]["data"][4],
+      received_at: new Date(),
+    }).save(function (err, result) {
+      if (err) throw err;
 
-    console.log(result + err);
-    if (result) {
-      res.json(result);
-    }
-  });
+      console.log(result + err);
+      if (result) {
+        res.json(result);
+      }
+    });
+  } else {
+    res.send(400);
+  }
 });
 
 router.post("/save_driver_details/", async function (req, res) {
@@ -50,23 +58,23 @@ router.post("/save_driver_details/", async function (req, res) {
 });
 
 router.post("/downlink/", async function (req, res) {
-  let erick_id = req.body["erick_id"]
-  let api_data = req.body["data"]
+  let erick_id = req.body["id"]
+  let api_data = req.body["state"] == "lock" ? "AA" : "BA"
   var data = JSON.stringify({
     "downlinks": [
       {
-        "frm_payload": Buffer.from(api_data).toString('base64'),        
-        "f_port": 15,
-        "priority": "NORMAL"
+        "frm_payload": api_data,
+        "f_port": 1,
+        "priority": "HIGH"
       }
     ]
   });
 
   var config = {
     method: 'post',
-    url: `https://eu1.cloud.thethings.network/api/v3/as/applications/erick-tracking/webhooks/testing/devices/`+erick_id+`/down/push`,
+    url: `https://eu1.cloud.thethings.network/api/v3/as/applications/erick-tracking/webhooks/downlink-hook/devices/` + erick_id + `/down/push`,
     headers: {
-      'Authorization': 'Bearer NNSXS.ILIFQTABIZ5JAQIT4BOTLZ7KGDQJFJDI2ULAMNQ.UUZ5XK7MKIKG3V4KGQN45QOMBYRPQLIG2T3UN5NZJN32JVHDIS6A',
+      'Authorization': 'Bearer NNSXS.KPXZZN4TBNWICWGCEBTBD2B6MD73EVOJS3GPP4I.JX5D6MAUFITYXMXDXPKAPBOC3FBC7OH62KP6IN5FG2WBQBFAF7ZA',
       'Content-Type': 'application/json',
       'User-Agent': 'my-integration/my-integration-version'
     },
@@ -76,9 +84,11 @@ router.post("/downlink/", async function (req, res) {
   axios(config)
     .then(function (response) {
       console.log(JSON.stringify(response.data));
+      res.send(200);
     })
     .catch(function (error) {
       console.log(error);
+      res.send(500);
     });
 
 })
@@ -153,6 +163,7 @@ router.get("/get_erick_data/", function (req, res) {
                 driver_name: "$driver_name",
                 driver_contact: "$driver_contact",
                 received_at: "$received_at",
+                locked: "$locked"
               },
             },
           },
@@ -188,6 +199,7 @@ router.get("/get_erick_data/", function (req, res) {
                 driver_name: "$driver_name",
                 driver_contact: "$driver_contact",
                 received_at: "$received_at",
+                locked: "$locked"
               },
             },
           },

@@ -7,6 +7,7 @@ const  data = new Schema({
     speed: Number,
     time: Number,
     received_at: Date,
+    locked: String,
     driver_name: {type: String, default: "Alice"},
     driver_contact: {type: Number, default: "0123456789"}
 }, {
